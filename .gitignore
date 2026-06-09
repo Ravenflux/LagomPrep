@@ -1,0 +1,34 @@
+# LagomPrep — .gitignore
+
+# ── Database (personal data — never commit) ───────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── PyInstaller ───────────────────────────────────────────────────────────────
+*.spec
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+
+# ── NSIS build output ─────────────────────────────────────────────────────────
+installer/LagomPrep_Setup.exe
+
+# ── Python environment ────────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+*.egg-info/
+
+# ── OS artifacts ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor artifacts ──────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
