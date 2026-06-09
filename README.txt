@@ -74,7 +74,6 @@ TIPS
   and tracks daily calorie targets per household member
 - Use Settings > Theme to switch between Dark, Light, Forest,
   Ocean, Rose, and Nordic themes, or customize your own colors
-- The old ways are not forgotten. ↑↑↓↓..
 - Some names carry power. Type them at your own risk. 
 
 SECRETS
