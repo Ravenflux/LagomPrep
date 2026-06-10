@@ -176,6 +176,30 @@ def hydrate(row, conn):
     r['cook_log']=[dict(l) for l in conn.execute("SELECT * FROM cook_log WHERE recipe_id=? ORDER BY cooked_on DESC",(rid,)).fetchall()]
     return r
 
+CURRENT_VERSION = 'v1.0.1'
+
+@app.route('/api/check_update')
+def check_update():
+    try:
+        resp = requests.get(
+            'https://api.github.com/repos/Ravenflux/LagomPrep/releases/latest',
+            headers={'Accept':'application/vnd.github.v3+json'},
+            timeout=5
+        )
+        data = resp.json()
+        latest = data.get('tag_name','')
+        def parse_ver(v):
+            try: return [int(x) for x in v.lstrip('v').split('.')]
+            except: return [0]
+        return jsonify({
+            'current': CURRENT_VERSION,
+            'latest': latest,
+            'update_available': parse_ver(latest) > parse_ver(CURRENT_VERSION) and latest != '',
+            'url': data.get('html_url','https://github.com/Ravenflux/LagomPrep/releases')
+        })
+    except:
+        return jsonify({'update_available': False})
+
 @app.route('/')
 def index(): return render_template('index.html')
 

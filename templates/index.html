@@ -205,6 +205,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 #valhalla-overlay{position:fixed;inset:0;z-index:9998;pointer-events:none;background:transparent}
 #valhalla-overlay.active{pointer-events:none}
 .wild-mode{animation:wildTheme 3s linear infinite!important}
+/* Guided tour */
+#tour-overlay{position:fixed;inset:0;z-index:800;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75)}
+#tour-overlay.active{display:flex}
+#tour-box{background:var(--bg2);border:1px solid var(--accent);border-radius:var(--r);padding:22px 24px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.6);position:relative;z-index:801}
+#tour-box h3{font-size:15px;font-weight:700;color:var(--accent);margin-bottom:8px}
+#tour-box p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+.tour-progress{font-size:11px;color:var(--text3);margin-bottom:8px}
+.tour-steps-dots{display:flex;gap:5px;margin-bottom:14px}
+.tour-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:background .2s}
+.tour-dot.active{background:var(--accent)}
+.tour-btns{display:flex;gap:8px;align-items:center}
+#update-banner{display:none;align-items:center;gap:10px;padding:8px 20px;background:rgba(76,175,130,.1);border-bottom:1px solid var(--green);font-size:13px;flex-shrink:0}
+#update-banner.show{display:flex}
+#update-banner a{color:var(--green);font-weight:600;text-decoration:none}
+#update-banner a:hover{text-decoration:underline}
 @media print{
   #app{display:block}
   #sidebar,#topbar,#sel-bar,#mo,#picker,#toast,#content,.btn,#shop-handle{display:none!important}
@@ -251,12 +266,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   </a>
   <div class="nav-item" data-view="settings" onclick="sv('settings')"><span>⚙️</span>Settings</div>
   <div style="padding:10px 14px 6px;font-size:11px;color:var(--text3);text-align:center;line-height:1.6;border-top:1px solid var(--border);margin-top:6px">
-    Made with ❤️ & ⚡ by Thor Adlerbert<br>LagomPrep v1.0
+    Made with ❤️ & ⚡ by Thor Adlerbert<br>LagomPrep v1.0.1
   </div>
 </div>
 </div>
 
 <div id="main">
+  <div id="update-banner">
+  <span style="color:var(--green)">⬆</span>
+  <span id="update-msg"></span>
+  <a id="update-link" href="" target="_blank">Download</a>
+  <span style="margin-left:auto;cursor:pointer;color:var(--text3)" onclick="dismissUpdate()">✕</span>
+</div>
   <div id="topbar">
     <h1 id="view-title">All Recipes</h1>
     <div id="tag-filters"></div>
@@ -319,6 +340,36 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
         <div class="fg" style="margin-bottom:9px"><label>API Key</label><input type="text" id="usda-key-input" placeholder="Paste USDA API key here"/></div>
         <button class="btn primary" onclick="saveSettings()">Save Settings</button>
       </div>
+      <div class="set-card">
+        <h3>Bug Report & Feedback</h3>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Help us improve LagomPrep. All feedback is read personally.</p>
+        <div class="fg" style="margin-bottom:9px">
+          <label>Type of feedback</label>
+          <select id="bug-type" onchange="updateBugLabel()">
+            <option value="bug">🐛 Bug — something isn't working</option>
+            <option value="suggestion">💡 Suggestion — feature or improvement idea</option>
+            <option value="other">💬 General feedback</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:9px"><label id="bug-label">What went wrong?</label><input type="text" id="bug-title" placeholder="Short description"/></div>
+        <div class="fg" style="margin-bottom:9px"><label>Details (optional)</label><textarea id="bug-details" rows="3" placeholder="What were you doing? What did you expect vs what actually happened?"></textarea></div>
+        <div class="fg" style="margin-bottom:12px"><label>Your email (optional — only if you want a reply)</label><input type="email" id="bug-email" placeholder="you@example.com"/></div>
+        <button class="btn primary" onclick="submitBugReport()" id="bug-submit-btn">Send Report</button>
+       <div id="bug-result" style="margin-top:9px;font-size:12px"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;padding:8px 12px;background:var(--bg3);border-radius:var(--rs);border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span>LagomPrep</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn sm ghost" onclick="startTour()" style="font-size:11px;padding:3px 9px">📖 Tour</button>
+            <span style="color:var(--text2);font-weight:600">v1.0.1</span>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--text2)">
+          <input type="checkbox" id="updates-toggle" onchange="toggleUpdates(this)" style="accent-color:var(--accent)">
+          Check for updates on launch
+        </label>
+      </div>
     </div>
   </div>
   <div id="sel-bar" class="hidden">
@@ -369,6 +420,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   <div class="lightning-msg" id="lightning-msg">BY THE POWER OF ASGARD</div>
   <div class="lightning-sub">Click anywhere to dismiss</div>
 </div>
+<!-- Guided tour -->
+<div id="tour-overlay">
+  <div id="tour-box">
+    <div class="tour-progress" id="tour-progress"></div>
+    <div class="tour-steps-dots" id="tour-dots"></div>
+    <h3 id="tour-title"></h3>
+    <p id="tour-body"></p>
+    <div class="tour-btns">
+      <button class="btn primary sm" id="tour-next-btn" onclick="tourNext()">Next</button>
+      <button class="btn sm ghost" onclick="skipTour()">Skip tour</button>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -380,6 +444,7 @@ const SLOTS=['breakfast','lunch','dinner','snack'];
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const ACT=[{v:'sedentary',l:'Sedentary (desk job)'},{v:'light',l:'Light (1–3 days/wk)'},{v:'moderate',l:'Moderate (3–5 days/wk)'},{v:'active',l:'Active (6–7 days/wk)'},{v:'very_active',l:'Very Active (physical job)'}];
 const GOALS=[{v:'lose',l:'Lose weight (–500 cal/day)'},{v:'maintain',l:'Maintain weight'},{v:'gain',l:'Gain weight (+300 cal/day)'}];
+const KONAMI_KEYS=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 const PRESETS={
   dark:{accent:'#e8a838',bg:'#0f0f0f',bg2:'#1a1a1a',text:'#f0f0f0',text2:'#aaaaaa',border:'#333333'},
   light:{accent:'#c8881e',bg:'#f5f5f0',bg2:'#ffffff',text:'#1a1a1a',text2:'#555555',border:'#dddddd'},
@@ -394,6 +459,24 @@ let currentMoId=null,editingId=null,ingCount=0,stepCount=0;
 let activeTagFilter=null,pickerCtxData=null,currentWeek=getMondayStr(new Date()),allUsers=[],allCustomTags=[];
 let usdaSelected=null;
 
+async function checkForUpdate(){
+  try{
+    const s=await fetch('/api/settings').then(r=>r.json());
+    if(s.updates_disabled==='true') return;
+    const r=await fetch('/api/check_update');
+    const data=await r.json();
+    if(data.update_available){
+      document.getElementById('update-msg').textContent=`LagomPrep ${data.latest} is available.`;
+      document.getElementById('update-link').href=data.url;
+      document.getElementById('update-banner').classList.add('show');
+    }
+  }catch{}
+}
+
+function dismissUpdate(){
+  document.getElementById('update-banner').classList.remove('show');
+}
+
 async function init(){
   await loadRecipes();
   await loadUsers();
@@ -402,6 +485,10 @@ async function init(){
   const s=await fetch('/api/settings').then(r=>r.json());
   applyBranding(s);
   if(s.theme) applyTheme(JSON.parse(s.theme));
+  if(!s.tour_completed){
+    setTimeout(()=>startTour(),800);
+  }
+  checkForUpdate();
 }
 
 async function loadRecipes(retired=false){
@@ -548,8 +635,11 @@ function moEdit(){
   sv('edit');
   renderForm(recipe);
 }
+
 async function moRetire(){
   if(!currentMoId)return;
+  const r=allRecipes.find(x=>x.id===currentMoId);
+  if(!confirm(`Retire "${r.name}"?\n\nIt will be moved to the Retired list and hidden from your recipes.`))return;
   await fetch(`/api/recipes/${currentMoId}/retire`,{method:'POST'});
   closeMoDirect();toast('Recipe retired','success');loadRecipes();
 }
@@ -1113,9 +1203,54 @@ async function loadSettings(){
     if(t.text)document.getElementById('t-text').value=t.text;
     if(t.text2)document.getElementById('t-text2').value=t.text2;
     if(t.border)document.getElementById('t-border').value=t.border;
+  const toggle=document.getElementById('updates-toggle');
+  if(toggle) toggle.checked=s.updates_disabled!=='true';
   }
   await loadCustomTags();
 }
+
+function updateBugLabel(){
+  const labels={bug:'What went wrong?',suggestion:'What would you like to see?',other:'What\'s on your mind?'};
+  document.getElementById('bug-label').textContent=labels[document.getElementById('bug-type').value]||'Details';
+}
+
+async function submitBugReport(){
+  const title=document.getElementById('bug-title').value.trim();
+  if(!title){toast('Please describe your feedback','error');return}
+  const btn=document.getElementById('bug-submit-btn');
+  btn.textContent='Sending...';btn.disabled=true;
+  try{
+    const res=await fetch('https://formspree.io/f/mqeolevv',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        subject:`LagomPrep ${document.getElementById('bug-type').value} — ${title}`,
+        type:document.getElementById('bug-type').value,
+        title:title,
+        details:document.getElementById('bug-details').value||'No details provided',
+        email:document.getElementById('bug-email').value||'Not provided',
+        version:'v1.0.1',
+      })
+    });
+    if(res.ok){
+      document.getElementById('bug-result').innerHTML='<span style="color:var(--green)">✓ Report sent — thank you!</span>';
+      document.getElementById('bug-title').value='';
+      document.getElementById('bug-details').value='';
+      document.getElementById('bug-email').value='';
+    } else {
+      document.getElementById('bug-result').innerHTML='<span style="color:var(--red)">Failed to send. Try again later.</span>';
+    }
+  }catch{
+    document.getElementById('bug-result').innerHTML='<span style="color:var(--red)">No internet connection — report could not be sent.</span>';
+  }
+  btn.textContent='Send Report';btn.disabled=false;
+}
+
+async function toggleUpdates(el){
+  await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({updates_disabled:el.checked?'false':'true'})});
+}
+
 async function saveSettings(){
   const key=document.getElementById('usda-key-input').value.trim();
   await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usda_api_key:key})});
@@ -1128,7 +1263,6 @@ function toast(msg,type=''){const el=document.getElementById('toast');el.textCon
 
 // ── Easter Eggs ───────────────────────────────────────────────────────────────
 let logoClicks=0, logoTimer=null, konamiIdx=0, thorWord='', wildModeOn=false;
-const KONAMI=[38,38,40,40,37,39,37,39,66,65];
 const THOR_SEQUENCE='thor';
 
 const ODIN_RECIPE = {
@@ -1197,7 +1331,7 @@ function closeLightning(){
 }
 
 function triggerThor(){
-  showLightning('⚡ BY THOR ⚡','The God of Thunder acknowledges your devotion');
+  showLightning('⚡ BY THOR ⚡','The God of Thunder appreciates your adherence to the old ways.');
   document.getElementById('app').style.animation='thunderShake 0.4s ease';
   setTimeout(()=>document.getElementById('app').style.animation='',500);
 }
@@ -1224,30 +1358,81 @@ function onLogoClick(){
   }
 }
 
-// Konami code — unlocks Odin's recipe
 document.addEventListener('keydown',e=>{
-  if(e.keyCode===KONAMI[konamiIdx]){
-    konamiIdx++;
-    if(konamiIdx===KONAMI.length){
-      konamiIdx=0;
-      triggerThor();
+  // Ctrl+F — focus search
+  if((e.ctrlKey||e.metaKey)&&e.key==='f'){
+    const search=document.getElementById('search-input');
+    if(search&&search.style.display!=='none'){
+      e.preventDefault();search.focus();search.select();
     }
-  } else {
-    konamiIdx=0;
+    return;
   }
+  // Prevent WebView scroll capturing arrow keys
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();
+  }
+  // Konami code
+  if(e.key===KONAMI_KEYS[konamiIdx]){
+    konamiIdx++;
+    if(konamiIdx===KONAMI_KEYS.length){konamiIdx=0;triggerThor()}
+  } else {konamiIdx=0}
   // THOR word detection
   const key=e.key.toLowerCase();
   if('thor'.includes(key)&&key===THOR_SEQUENCE[thorWord.length]){
     thorWord+=key;
-    if(thorWord===THOR_SEQUENCE){
-      thorWord='';
-      unlockOdinRecipe();
-    }
-  } else {
-    thorWord=key==='t'?'t':'';
-  }
+    if(thorWord===THOR_SEQUENCE){thorWord='';unlockOdinRecipe()}
+  } else {thorWord=key==='t'?'t':''}
 });
 
+// ── Guided Tour ───────────────────────────────────────────────────────────────
+const TOUR_STEPS=[
+  {title:'Welcome to LagomPrep ⚡',body:'A quick tour to get you started. Click Next to continue or Skip to explore on your own.'},
+  {title:'Browse by Meal Type',body:'Use the sidebar to filter recipes by Breakfast, Lunch, Dinner, Snacks and more. Click any category to filter the recipe grid.'},
+  {title:'Recipe Cards',body:'Click any card to open the full recipe with ingredients, steps, and nutrition. Check the checkbox on a card to add it to your shopping list.'},
+  {title:'Shopping List',body:'Select multiple recipes and hit "Shopping List" to combine all their ingredients into one list. Pantry items you have stocked appear grayed out automatically.'},
+  {title:'Import Recipes',body:'Import recipes from any major recipe website by pasting a URL, or import a .lagom file shared by another LagomPrep user. Find it in the sidebar under Import Recipe.'},
+  {title:'Pantry Tracker',body:'Track what you have at home. Mark items as Stocked, Low, or Out — stocked items appear grayed out on your shopping list so you know what to skip.'},
+  {title:'Household & TDEE',body:'Add family members to track personalized daily calorie targets based on height, weight, activity level, and goals.'},
+  {title:'Meal Planner',body:'Assign recipes to days of the week for each household member and see daily calorie totals at a glance.'},
+  {title:'Settings',body:'Customize your theme, manage custom tags, set up USDA nutrition lookup, and send feedback directly to the developer.'},
+  {title:"You're all set! ⚡",body:"That's everything. Start by exploring the 24 starter recipes or adding your own. The curious may find more than 24. Skål.",last:true},
+];
+
+let tourStep=0;
+
+function startTour(){
+  tourStep=0;
+  const overlay=document.getElementById('tour-overlay');
+  overlay.classList.add('active');
+  overlay.style.pointerEvents='all';
+  // Build dots
+  document.getElementById('tour-dots').innerHTML=TOUR_STEPS.map((_,i)=>`<div class="tour-dot" id="tdot-${i}"></div>`).join('');
+  showTourStep();
+}
+
+function showTourStep(){
+  const step=TOUR_STEPS[tourStep];
+  document.getElementById('tour-progress').textContent=`Step ${tourStep+1} of ${TOUR_STEPS.length}`;
+  document.getElementById('tour-title').textContent=step.title;
+  document.getElementById('tour-body').textContent=step.body;
+  document.getElementById('tour-next-btn').textContent=step.last?'Finish':'Next';
+  // Update dots
+  document.querySelectorAll('.tour-dot').forEach((d,i)=>d.classList.toggle('active',i===tourStep));
+}
+
+function tourNext(){
+  if(tourStep>=TOUR_STEPS.length-1){endTour()}
+  else{tourStep++;showTourStep()}
+}
+
+async function endTour(){
+  const overlay=document.getElementById('tour-overlay');
+  overlay.classList.remove('active');
+  overlay.style.pointerEvents='none';
+  await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tour_completed:'true'})});
+}
+
+function skipTour(){endTour()}
 init();
 </script>
 </body>
